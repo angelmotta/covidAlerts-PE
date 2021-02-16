@@ -8,44 +8,68 @@ import (
 	"os"
 )
 
-type Report struct {
-	date string
-	newCases int
-	deceases int
-	// newCasesByDept map
-	// deceasesByDept map
+type ReportCases struct {
+	date		string
+	newCases 	int
+	totalCases	int
+	//newCasesByDept map
+}
+
+func (report *ReportCases) display() {
+	// Display Results
+	fmt.Printf("Nuevos casos (registrados el %s): %d contagiados\n", report.date, report.newCases)
+	fmt.Printf("Total de casos a la fecha: %d contagiados \n", report.totalCases)
+}
+
+type ReportDeceased struct {
+	date          string
+	deceased      int
+	totalDeceased int
+	//deceasesByDept map
+}
+
+func (report *ReportDeceased) display() {
+	// Display Results
+	fmt.Printf("Número de fallecidos (el día %s): %d personas\n", report.date, report.deceased)
+	fmt.Printf("Total de fallecidos a la fecha: %d personas\n", report.totalDeceased)
 }
 
 func checkForError(e error) {
 	if e != nil {
-		log.Fatalln("Error opening csv file: ", e)
+		log.Fatalln("Error reading csv file: ", e)
 	}
 }
 
-func getLastDay(f *os.File) string {
-	// setup csvReader
-	csvReader := csv.NewReader(f)
-	csvReader.Comma = ';'
-
-	// discard first line
-	_, err := csvReader.Read()
-	checkForError(err)
-
-	// get from the first line 'FECHA_CORTE'
-	record, err := csvReader.Read()
-	return record[0]
-}
-
-func parseCsvFile(fileName string) Report {
+func getLastDay(fileName string) string {
 	// Try Open file
 	csvFile, err := os.Open(fileName)
 	checkForError(err)
 	defer csvFile.Close()
 
-	lastDay := getLastDay(csvFile)
-	fmt.Printf("last day: %s\n", lastDay)
-	// setup a new csvReader and restore the pointer of the File descriptor
-	csvFile.Seek(0, 0) // This is needed to avoid bugs about the pointer position
+	// setup csvReader
+	csvReader := csv.NewReader(csvFile)
+	csvReader.Comma = ';'
+
+	// discard first line (column headers)
+	_, err = csvReader.Read()
+	checkForError(err)
+
+	// get from the first line the 'FECHA_CORTE' field
+	record, err := csvReader.Read()
+	checkForError(err)
+	return record[0]
+}
+
+func getReportCases(fileName string) ReportCases {
+	// get lastDay based on 'FECHA_CORTE' field
+	lastDay := getLastDay(fileName)
+
+	// Try Open file
+	csvFile, err := os.Open(fileName)
+	checkForError(err)
+	defer csvFile.Close()
+
+	// Setup a csv reader
 	csvReader := csv.NewReader(csvFile)
 	csvReader.Comma = ';'
 
@@ -56,12 +80,12 @@ func parseCsvFile(fileName string) Report {
 	// iterate over the entire file
 	newCasesLastDay := 0
 	totalCases := 0
-	deceasedLastDay := 0
 	for {
 		record, err := csvReader.Read() // get a record string[]
 		if err == io.EOF { break }
 		checkForError(err)
 
+		// Count total covid cases from the beginning of the pandemic
 		totalCases++
 
 		// CSV Sanity check
@@ -76,45 +100,61 @@ func parseCsvFile(fileName string) Report {
 		}
 	}
 
-	// Display Results
-	// TODO: get 'deceases' attribute
-	fmt.Printf("Nuevos casos COVID (registrados el %s): %d contagiados\n", lastDay, newCasesLastDay)
-	fmt.Printf("Número de fallecidos el día (%s): %d personas\n", lastDay, deceasedLastDay)
-	fmt.Printf("Total casos positivos a la fecha: %d contagiados \n", totalCases)
-
-
-	myNewReport := Report{lastDay, newCasesLastDay, deceasedLastDay}
+	myNewReport := ReportCases{lastDay, newCasesLastDay, totalCases}
 	return myNewReport
 }
 
-func testModifiedStruct(newReport *Report) {
-	newReport.date = "20210131"
-	newReport.newCases = 100
-	newReport.deceases = 30
-}
+func getReportDeceased(fileName string) ReportDeceased {
+	// get lastDay based on 'FECHA_CORTE' field
+	lastDay := getLastDay(fileName)
 
-func getStructReport() Report {
-	newReport := Report{"20210131", 10, 3} // Struct literal
-	return newReport
+	// Try Open file
+	csvFile, err := os.Open(fileName)
+	checkForError(err)
+	defer csvFile.Close()
+
+	// Setup a csv reader
+	csvReader := csv.NewReader(csvFile)
+	csvReader.Comma = ';'
+
+	// discard first line of column headers
+	_, err = csvReader.Read()
+	checkForError(err)
+
+	// iterate over the csv file
+	totalDeceased := 0
+	deceasesLastDay := 0
+
+	for {
+		record, err := csvReader.Read() // get a record string[]
+		if err == io.EOF { break }
+		checkForError(err)
+
+		// Count total deceases from the beginning of pandemic
+		totalDeceased++
+
+		// Looking for more recent deceases
+		if record[0] == record[2] {  // Compare 'FECHA_CORTE' with 'FECHA_FALLECIMIENTO'
+			//fmt.Printf("Caso en el ultimo día\n")
+			deceasesLastDay++
+		}
+	}
+
+	// Dummy data
+	myReportDeceases := ReportDeceased{lastDay, deceasesLastDay, totalDeceased}
+	return myReportDeceases
 }
 
 
 func main() {
 	// process CSV File
-	fileName := "dataFiles/positivos_covid_3_2_2021.csv"
-
-	// Create a new Struct and send it by reference
-	//report1 := Report{}
-	//fmt.Println(report1)
-	//testModifiedStruct(&report1)
-	//fmt.Println(report1)
-
-	// Invoke a function and receive a struct
-	//report2 := getStructReport()
-	//fmt.Println(report2)
+	fileNameCases := "dataFiles/positivos_covid_3_2_2021.csv"
+	fileNameDeceased := "dataFiles/fallecidos_covid_3_2_2021.csv"
 
 	// Parse and receive a report
-	report1 := parseCsvFile(fileName)
-	fmt.Println(report1)
-	fmt.Printf("{date: %s, newCases: %d, decease: %d}", report1.date, report1.newCases, report1.deceases)
+	newReportCases := getReportCases(fileNameCases)
+	newReportDeceases := getReportDeceased(fileNameDeceased)
+
+	newReportCases.display()
+	newReportDeceases.display()
 }
