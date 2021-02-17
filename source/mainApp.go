@@ -12,13 +12,14 @@ type ReportCases struct {
 	date		string
 	newCases 	int
 	totalCases	int
-	//newCasesByDept map
+	newCasesByDept map[string]int
 }
 
 func (report *ReportCases) display() {
 	// Display Results
 	fmt.Printf("Nuevos casos (registrados el %s): %d contagiados\n", report.date, report.newCases)
 	fmt.Printf("Total de casos a la fecha: %d contagiados \n", report.totalCases)
+	fmt.Println("Casos por Departamento", report.newCasesByDept)
 }
 
 type ReportDeceased struct {
@@ -77,9 +78,12 @@ func getReportCases(fileName string) ReportCases {
 	_, err = csvReader.Read()
 	checkForError(err)
 
-	// iterate over the entire file
+	// vars for Struct attributes
 	newCasesLastDay := 0
 	totalCases := 0
+	casesByDept := make(map[string]int)
+
+	// iterate over the entire file
 	for {
 		record, err := csvReader.Read() // get a record string[]
 		if err == io.EOF { break }
@@ -88,19 +92,24 @@ func getReportCases(fileName string) ReportCases {
 		// Count total covid cases from the beginning of the pandemic
 		totalCases++
 
-		// CSV Sanity check
-		if lastDay != record[0] {	// assure all records has the same 'FECHA_CORTE'
-			fmt.Printf("Record #%d UUID:%s has a different 'FECHA_CORTE' attribute\n", totalCases, record[1])
+		// Looking for new cases in last day
+		if record[0] == record[8] {  // Compare 'FECHA_CORTE' with 'FECHA_RESULTADO'
+			// new case
+			newCasesLastDay++
+			// Get cases by 'DEPARTAMENTO'
+			dept := record[2]
+			value, isPresent := casesByDept[dept]
+			if isPresent {
+				casesByDept[dept]++
+			} else {
+				value = 1
+				casesByDept[dept] = value
+			}
 		}
 
-		// Looking for cases in last day
-		if record[0] == record[8] {  // Compare 'FECHA_CORTE' with 'FECHA_RESULTADO'
-			//fmt.Printf("Caso en el ultimo día\n")
-			newCasesLastDay++
-		}
 	}
 
-	myNewReport := ReportCases{lastDay, newCasesLastDay, totalCases}
+	myNewReport := ReportCases{date:lastDay, newCases:newCasesLastDay, totalCases: totalCases, newCasesByDept: casesByDept}
 	return myNewReport
 }
 
