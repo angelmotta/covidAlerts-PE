@@ -9,29 +9,32 @@ import (
 )
 
 type ReportCases struct {
-	date		string
-	newCases 	int
-	totalCases	int
-	newCasesByDept map[string]int
+	date			string
+	newCases 		int
+	totalCases		int
+	newCasesByDept	map[string]int
 }
 
 func (report *ReportCases) display() {
 	// Display Results
+	fmt.Println("*** Report New Cases ***")
 	fmt.Printf("Nuevos casos (registrados el %s): %d contagiados\n", report.date, report.newCases)
-	fmt.Printf("Total de casos a la fecha: %d contagiados \n", report.totalCases)
 	fmt.Println("Casos por Departamento", report.newCasesByDept)
+	fmt.Printf("Total de casos a la fecha: %d contagiados \n", report.totalCases)
 }
 
 type ReportDeceased struct {
-	date          string
-	deceased      int
-	totalDeceased int
-	//deceasesByDept map
+	date          	string
+	deceased      	int
+	totalDeceased	int
+	deceasesByDept	map[string]int
 }
 
 func (report *ReportDeceased) display() {
 	// Display Results
+	fmt.Println("*** Report Deceased ***")
 	fmt.Printf("Número de fallecidos (el día %s): %d personas\n", report.date, report.deceased)
+	fmt.Println("Fallecidos por departamento", report.deceasesByDept)
 	fmt.Printf("Total de fallecidos a la fecha: %d personas\n", report.totalDeceased)
 }
 
@@ -106,7 +109,6 @@ func getReportCases(fileName string) ReportCases {
 				casesByDept[dept] = value
 			}
 		}
-
 	}
 
 	myNewReport := ReportCases{date:lastDay, newCases:newCasesLastDay, totalCases: totalCases, newCasesByDept: casesByDept}
@@ -133,7 +135,7 @@ func getReportDeceased(fileName string) ReportDeceased {
 	// iterate over the csv file
 	totalDeceased := 0
 	deceasesLastDay := 0
-
+	deceaseByDept := make(map[string]int)
 	for {
 		record, err := csvReader.Read() // get a record string[]
 		if err == io.EOF { break }
@@ -142,15 +144,23 @@ func getReportDeceased(fileName string) ReportDeceased {
 		// Count total deceases from the beginning of pandemic
 		totalDeceased++
 
-		// Looking for more recent deceases
+		// Looking for deceases in the last day ('FECHA_CORTE' field)
 		if record[0] == record[2] {  // Compare 'FECHA_CORTE' with 'FECHA_FALLECIMIENTO'
-			//fmt.Printf("Caso en el ultimo día\n")
 			deceasesLastDay++
+			// Get decease by department
+			dept := record[6]
+			val, isPresent := deceaseByDept[dept]
+			if isPresent {
+				deceaseByDept[dept]++
+			} else {
+				val = 1
+				deceaseByDept[dept] = val
+			}
 		}
 	}
 
 	// Dummy data
-	myReportDeceases := ReportDeceased{lastDay, deceasesLastDay, totalDeceased}
+	myReportDeceases := ReportDeceased{lastDay, deceasesLastDay, totalDeceased, deceaseByDept}
 	return myReportDeceases
 }
 
