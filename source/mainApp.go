@@ -1,42 +1,12 @@
 package main
 
 import (
+	"AlertsProject/source/model"
 	"encoding/csv"
-	"fmt"
 	"io"
 	"log"
 	"os"
 )
-
-type ReportCases struct {
-	date			string
-	newCases 		int
-	totalCases		int
-	newCasesByDept	map[string]int
-}
-
-func (report *ReportCases) display() {
-	// Display Results
-	fmt.Println("*** Report New Cases ***")
-	fmt.Printf("Nuevos casos (registrados el %s): %d contagiados\n", report.date, report.newCases)
-	fmt.Println("Casos por Departamento", report.newCasesByDept)
-	fmt.Printf("Total de casos a la fecha: %d contagiados \n", report.totalCases)
-}
-
-type ReportDeceased struct {
-	date          	string
-	deceased      	int
-	totalDeceased	int
-	deceasesByDept	map[string]int
-}
-
-func (report *ReportDeceased) display() {
-	// Display Results
-	fmt.Println("*** Report Deceased ***")
-	fmt.Printf("Número de fallecidos (el día %s): %d personas\n", report.date, report.deceased)
-	fmt.Println("Fallecidos por departamento", report.deceasesByDept)
-	fmt.Printf("Total de fallecidos a la fecha: %d personas\n", report.totalDeceased)
-}
 
 func checkForError(e error) {
 	if e != nil {
@@ -64,7 +34,7 @@ func getLastDay(fileName string) string {
 	return record[0]
 }
 
-func getReportCases(fileName string) ReportCases {
+func getReportCases(fileName string) model.CasesReport {
 	// get lastDay based on 'FECHA_CORTE' field
 	lastDay := getLastDay(fileName)
 
@@ -111,11 +81,11 @@ func getReportCases(fileName string) ReportCases {
 		}
 	}
 
-	myNewReport := ReportCases{date:lastDay, newCases:newCasesLastDay, totalCases: totalCases, newCasesByDept: casesByDept}
+	myNewReport := model.CasesReport{Date: lastDay, NewCases:newCasesLastDay, TotalCases: totalCases, NewCasesByDept: casesByDept}
 	return myNewReport
 }
 
-func getReportDeceased(fileName string) ReportDeceased {
+func getReportDeceased(fileName string) model.DeceasedReport {
 	// get lastDay based on 'FECHA_CORTE' field
 	lastDay := getLastDay(fileName)
 
@@ -159,8 +129,7 @@ func getReportDeceased(fileName string) ReportDeceased {
 		}
 	}
 
-	// Dummy data
-	myReportDeceases := ReportDeceased{lastDay, deceasesLastDay, totalDeceased, deceaseByDept}
+	myReportDeceases := model.DeceasedReport{Date: lastDay, Deceased: deceasesLastDay, TotalDeceased: totalDeceased, DeceasesByDept: deceaseByDept}
 	return myReportDeceases
 }
 
@@ -174,6 +143,6 @@ func main() {
 	newReportCases := getReportCases(fileNameCases)
 	newReportDeceases := getReportDeceased(fileNameDeceased)
 
-	newReportCases.display()
-	newReportDeceases.display()
+	newReportCases.Display()
+	newReportDeceases.Display()
 }
