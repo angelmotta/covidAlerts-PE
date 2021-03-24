@@ -12,7 +12,7 @@ type CasesReport struct {
 
 func (report *CasesReport) Display() {
 	// Display Results
-	fmt.Println("*** New Cases Report ***")
+	fmt.Println("\n*** New Cases Report ***")
 	fmt.Printf("Nuevos casos (registrados el %s): %d contagiados\n", report.Date, report.NewCases)
 	fmt.Println("Casos por Departamento", report.NewCasesByDept)
 	fmt.Printf("Total de casos a la fecha: %d contagiados \n\n", report.TotalCases)
