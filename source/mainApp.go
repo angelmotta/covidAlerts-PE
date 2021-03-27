@@ -10,6 +10,12 @@ import (
 )
 
 func main() {
+	// Load Config values
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Fatal("Can not load configuration", err)
+	}
+
 	// TODO: HTTP get CSV Files
 
 	// Process CSV File
@@ -21,12 +27,6 @@ func main() {
 
 	newReportCases.Display()
 	newReportDeceases.Display()
-
-	// Load Config values
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Fatal("Can not load configuration", err)
-	}
 
 	// Db Connection
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", config.DBHost, config.DBPort, config.DBUser, config.DBPass, config.DBName)
