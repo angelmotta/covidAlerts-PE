@@ -5,6 +5,7 @@ import (
 	"github.com/angelmotta/covidAlerts-PE/source/model"
 	"github.com/angelmotta/covidAlerts-PE/source/repository"
 	"log"
+	"time"
 )
 
 // pgsqlReportRepository will implement the interface 'repository.Repository'
@@ -20,19 +21,25 @@ func NewPgSqlReportRepository (Conn *sql.DB) repository.Repository {
 // pgsqlReportRepository implements 'pgsqlReportRepository' Interface
 func (pgRepo *pgsqlReportRepository) Create(report *model.CasesReport) error {
 	// Prepare statement
-	stmt, err := pgRepo.Conn.Prepare("INSERT INTO dailycases (newcases_date, newcases) VALUES ($1, $2)")
+	stmt, err := pgRepo.Conn.Prepare("INSERT INTO dailycases (newcases_date, newcases_amount) VALUES ($1, $2)")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
 	// Execute Sql statement
-	res, err := stmt.Exec(report.Date, report.NewCases)	// 'Date' string, 'NewCases' int
+	newCasesDateStr := report.Date
+	dateNewCasesReport, _ := time.Parse("20060102", newCasesDateStr)
+	newCasesDateStr = dateNewCasesReport.Format("2006-01-02")
+
+	res, err := stmt.Exec(newCasesDateStr, report.NewCases)	// 'Date' string, 'NewCases' int
 	if err != nil {
+		log.Println("SQL INSERT Execution Error:", err)
 		return err
 	}
 
 	// Validate executed statement
+	log.Println("SQL INSERT Successfully Executed")
 	rowCnt, err := res.RowsAffected()
 	if err != nil {
 		return err

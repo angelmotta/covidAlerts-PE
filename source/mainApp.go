@@ -1,10 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"github.com/angelmotta/covidAlerts-PE/source/driver"
 	//"database/sql"
 	//"fmt"
 	"github.com/angelmotta/covidAlerts-PE/source/handler"
-	"github.com/angelmotta/covidAlerts-PE/source/driver"
 	"github.com/angelmotta/covidAlerts-PE/source/util"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"log"
@@ -21,6 +22,7 @@ func main() {
 	if err != nil {
 		log.Fatal("DB connection error", err)
 	}
+	fmt.Println("Successfully connected to DB")
 
 	newCasesHandler := handler.NewCasesHandler(dbConn)
 	newCasesHandler.Create()	// get-read csv and insert into DB
