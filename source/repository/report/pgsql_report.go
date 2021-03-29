@@ -20,7 +20,7 @@ func NewPgSqlReportRepository (Conn *sql.DB) repository.Repository {
 // pgsqlReportRepository implements 'pgsqlReportRepository' Interface
 func (pgRepo *pgsqlReportRepository) Create(report *model.CasesReport) error {
 	// Prepare statement
-	stmt, err := pgRepo.Conn.Prepare("INSERT INTO dailycases (date, newcases) VALUES ($1, $2)")
+	stmt, err := pgRepo.Conn.Prepare("INSERT INTO dailycases (newcases_date, newcases) VALUES ($1, $2)")
 	if err != nil {
 		return err
 	}

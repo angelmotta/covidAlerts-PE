@@ -1,4 +1,4 @@
-package usecase
+package handler
 
 import (
 	"encoding/csv"
@@ -34,7 +34,7 @@ func getLastDay(fileName string) string {
 	return record[0]
 }
 
-func GetReportCases(fileName string) model.CasesReport {
+func getReportCases(fileName string) model.CasesReport {
 	// get lastDay based on 'FECHA_CORTE' field
 	lastDay := getLastDay(fileName)
 
