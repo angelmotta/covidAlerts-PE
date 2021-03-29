@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 )
 
 func checkForError(e error) {
@@ -14,6 +15,14 @@ func checkForError(e error) {
 	}
 }
 
+// Return date format 'YYYY-MM-DD'
+func getDateFormat(dateVal string) string {
+	dateFormat, _ := time.Parse("20060102", dateVal)
+	newDateStr := dateFormat.Format("2006-01-02")
+	return newDateStr
+}
+
+// Return most recent date field from csv file
 func getLastDay(fileName string) string {
 	// Try Open file
 	csvFile, err := os.Open(fileName)
@@ -81,11 +90,12 @@ func getReportCases(fileName string) model.CasesReport {
 		}
 	}
 
+	lastDay = getDateFormat(lastDay) // get date format 'YYYY-MM-DD'
 	myNewReport := model.CasesReport{Date: lastDay, NewCases:newCasesLastDay, TotalCases: totalCases, NewCasesByDept: casesByDept}
 	return myNewReport
 }
 
-func GetReportDeceased(fileName string) model.DeceasedReport {
+func getReportDeceased(fileName string) model.DeceasedReport {
 	// get lastDay based on 'FECHA_CORTE' field
 	lastDay := getLastDay(fileName)
 
@@ -129,6 +139,7 @@ func GetReportDeceased(fileName string) model.DeceasedReport {
 		}
 	}
 
-	myReportDeceases := model.DeceasedReport{Date: lastDay, Deceased: deceasesLastDay, TotalDeceased: totalDeceased, DeceasesByDept: deceaseByDept}
+	lastDay = getDateFormat(lastDay) // get date format 'YYYY-MM-DD'
+	myReportDeceases := model.DeceasedReport{Date: lastDay, NewDeceased: deceasesLastDay, TotalDeceased: totalDeceased, DeceasesByDept: deceaseByDept}
 	return myReportDeceases
 }
