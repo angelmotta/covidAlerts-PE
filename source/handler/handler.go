@@ -8,18 +8,19 @@ import (
 )
 
 // New Daily Cases
-type NewCasesRepo struct {
+type newCasesRepo struct {
 	repo repository.NewCasesRepo // interface
 }
 
-// Return struct 'NewCasesRepo' with repository Interface
-func NewCasesHandler(db *driver.DB) *NewCasesRepo {
-	return &NewCasesRepo{
+// Return struct 'newCasesRepo' with repository Interface
+func NewCasesHandler(db *driver.DB) *newCasesRepo {
+	return &newCasesRepo{
 		repo: newCases.NewSQLNewCasesRepo(db.SQL),
 	}
 }
 
-func (newCases *NewCasesRepo) Create() error {
+// Create daily newCases record
+func (newCases *newCasesRepo) Create() error {
 	fileNameCases := "dataFiles/positivos_covid_3_2_2021.csv"
 	reportNewCases  := getReportCases(fileNameCases)
 	err := newCases.repo.Create(&reportNewCases)	// insert into DB (using Interface)
@@ -30,18 +31,19 @@ func (newCases *NewCasesRepo) Create() error {
 }
 
 // New Deceased Cases
-type DeceasedCasesRepo struct {
+type deceasedCasesRepo struct {
 	repo repository.DeceasedCasesRepo // interface
 }
 
-// Return struct 'NewCasesRepo' with repository Interface
-func NewDeceasedCasesHandler(db *driver.DB) *DeceasedCasesRepo {
-	return &DeceasedCasesRepo{
+// Return struct 'newCasesRepo' with repository Interface
+func NewDeceasedCasesHandler(db *driver.DB) *deceasedCasesRepo {
+	return &deceasedCasesRepo{
 		repo: deceasedCases.NewSQLDeceasedCasesRepo(db.SQL),
 	}
 }
 
-func (deceasedCases *DeceasedCasesRepo) Create() error {
+// Create daily deceased record
+func (deceasedCases *deceasedCasesRepo) Create() error {
 	fileNameDeceased := "dataFiles/fallecidos_covid_3_2_2021.csv"
 	reportNewDeceased  := getReportDeceased(fileNameDeceased)
 	err := deceasedCases.repo.Create(&reportNewDeceased)	// insert into DB (using Interface)

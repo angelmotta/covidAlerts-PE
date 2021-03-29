@@ -20,14 +20,14 @@ func NewSQLNewCasesRepo(Conn *sql.DB) repository.NewCasesRepo {
 // pgsqlNewCasesRepo implements 'pgsqlNewCasesRepo' Interface
 func (pgRepo *pgsqlNewCasesRepo) Create(report *model.CasesReport) error {
 	// Prepare statement
-	stmt, err := pgRepo.Conn.Prepare("INSERT INTO dailycases (newcases_date, newcases_amount) VALUES ($1, $2)")
+	stmt, err := pgRepo.Conn.Prepare("INSERT INTO dailycases (newcases_date, newcases_amount, totalcases) VALUES ($1, $2, $3)")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
 	// Execute Sql statement
-	res, err := stmt.Exec(report.Date, report.NewCases)
+	res, err := stmt.Exec(report.Date, report.NewCases, report.TotalCases)
 	if err != nil {
 		log.Println("SQL INSERT Execution failed, ", err)
 		return err
@@ -39,7 +39,7 @@ func (pgRepo *pgsqlNewCasesRepo) Create(report *model.CasesReport) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("DBMetada: #Rows affected = %d\n", rowCnt)
+	log.Printf("DB Metada: #Rows affected = %d\n", rowCnt)
 
 	return nil
 }

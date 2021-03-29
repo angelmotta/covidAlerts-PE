@@ -38,7 +38,7 @@ func (pgRepo *pgsqlDeceasedCasesRepo) Create(report *model.DeceasedReport) error
 	if err != nil {
 		return err
 	}
-	log.Printf("DBMetada: #Rows affected = %d\n", rowCnt)
+	log.Printf("DB Metada: #Rows affected = %d\n", rowCnt)
 
 	return nil
 }
