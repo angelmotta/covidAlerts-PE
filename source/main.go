@@ -35,4 +35,14 @@ func main() {
 	if err != nil {
 		log.Println("Insertion deceasedCases record failed, ", err)
 	}
+
+	// Post Tweet
+	codResp, err := handler.NewPostTweet(&config, 100, 10)
+	if err != nil {
+		log.Println("API not responding. Post tweet failed, ", err)
+	}
+	if codResp != 0 {
+		log.Println("Post tweet failed, check response message from API Server")
+	}
+	log.Println("Post tweet done!")
 }

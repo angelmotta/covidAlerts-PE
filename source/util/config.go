@@ -6,11 +6,15 @@ import (
 
 // Values are read by Viper from a config file or environment variables
 type Config struct {
-	DBHost	string `mapstructure:"DB_HOST"`
-	DBPort	string `mapstructure:"DB_PORT"`
-	DBUser	string `mapstructure:"DB_USER"`
-	DBPass	string `mapstructure:"DB_PASS"`
-	DBName	string `mapstructure:"DB_NAME"`
+	DBHost				string `mapstructure:"DB_HOST"`
+	DBPort				string `mapstructure:"DB_PORT"`
+	DBUser				string `mapstructure:"DB_USER"`
+	DBPass				string `mapstructure:"DB_PASS"`
+	DBName				string `mapstructure:"DB_NAME"`
+	TApiKey				string `mapstructure:"TWITTER_API_KEY"`
+	TApiSecretKey		string `mapstructure:"TWITTER_API_SECRET_KEY"`
+	TAccessToken		string `mapstructure:"TWITTER_ACCESS_TOKEN"`
+	TAccessTokenSecret	string `mapstructure:"TWITTER_ACCESS_TOKEN_SECRET"`
 }
 
 // LoadConfig reads configuration from file or environment variables
