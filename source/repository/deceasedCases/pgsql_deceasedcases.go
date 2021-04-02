@@ -29,6 +29,7 @@ func (pgRepo *pgsqlDeceasedCasesRepo) Create(report *model.DeceasedReport) (int,
 	res, err := stmt.Exec(report.Date, report.NewDeceased, report.TotalDeceased)
 	if err != nil {
 		log.Println("SQL INSERT Execution failed, ", err)
+		log.Printf("SQL values were, deceasedcases_date: %v, newdeceased_amount: %v, totaldeceased: %v \n", report.Date, report.NewDeceased, report.TotalDeceased)
 		return 0, err
 	}
 

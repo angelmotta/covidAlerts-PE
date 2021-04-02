@@ -6,6 +6,7 @@ import (
 	"github.com/angelmotta/covidAlerts-PE/source/util"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"log"
+	"os"
 )
 
 func main() {
@@ -36,13 +37,20 @@ func main() {
 		log.Println("No Insertion of new deceased Cases record, ", err)
 	}
 
+	// Twitter Post publication
+	tweetMsg, isValid := handler.GetTweetMsg(dateDailyCases, numNewCases, dateDeceased, numDeceased)
+	if isValid != true {
+		os.Exit(0)
+	}
+	log.Printf("Prepared Tweet: \n%v\n", tweetMsg)
+
 	// Post Tweet
-	codResp, err := handler.NewPostTweet(&config, dateDailyCases, numNewCases, dateDeceased, numDeceased)
+	codResp, err := handler.NewPostTweet(&config, tweetMsg)
 	if err != nil {
 		log.Println("API not responding. Post tweet failed, ", err)
 	}
-	if codResp != 0 {
+	if codResp != 200 {
 		log.Println("Post tweet failed, check response message from API Server")
 	}
-	log.Println("Post tweet done!")
+	log.Println("Post tweet Done!")
 }

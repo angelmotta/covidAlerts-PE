@@ -30,7 +30,7 @@ func (pgRepo *pgsqlNewCasesRepo) Create(report *model.CasesReport) (int, error) 
 	res, err := stmt.Exec(report.Date, report.NewCases, report.TotalCases)
 	if err != nil {
 		log.Println("SQL INSERT Execution failed, ", err)
-		log.Printf("date: %v, newCases: %v, totalCases: %v \n", report.Date, report.NewCases, report.TotalCases)
+		log.Printf("SQL values were, newcases_date: %v, newcases_amount: %v, totalCases: %v \n", report.Date, report.NewCases, report.TotalCases)
 		return 0, err
 	}
 

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"github.com/angelmotta/covidAlerts-PE/source/driver"
 	"github.com/angelmotta/covidAlerts-PE/source/repository"
 	"github.com/angelmotta/covidAlerts-PE/source/repository/deceasedCases"
@@ -26,11 +25,12 @@ func NewCasesHandler(db *driver.DB) *newCasesRepo {
 
 // Create daily newCases record
 func (newCases *newCasesRepo) Create() (dateCases string, dailyCases int, err error) {
-	fileNameCases := "dataFiles/positivos_covid_3_2_2021.csv"
+	// TODO: Method HTTP to get CSV file
+	fileNameCases := "dataFiles/positivos_covid_2_4_2021.csv"
 	reportNewCases  := getReportCases(fileNameCases)		// Read CSV and return a report
 	_, err = newCases.repo.Create(&reportNewCases)	// insert into DB (using Interface)
-	if err != nil {
-		return
+	if err != nil {	// if SQL insertion fail
+		return 		// return null date, null dailyCases and error value
 	}
 
 	dateCases = reportNewCases.Date
@@ -52,7 +52,7 @@ func NewDeceasedCasesHandler(db *driver.DB) *deceasedCasesRepo {
 
 // Create daily deceased record
 func (deceasedCases *deceasedCasesRepo) Create() (dateDeceased string, numDeceased int, err error) {
-	fileNameDeceased := "dataFiles/positivos_covid_1_4_2021.csv"
+	fileNameDeceased := "dataFiles/fallecidos_covid_2_4_2021.csv"
 	reportNewDeceased  := getReportDeceased(fileNameDeceased)	// Read CSV and return a report
 	_, err = deceasedCases.repo.Create(&reportNewDeceased)	// insert into DB (using Interface)
 	if err != nil {
@@ -66,7 +66,7 @@ func (deceasedCases *deceasedCasesRepo) Create() (dateDeceased string, numDeceas
 
 
 // New Post Tweet
-func NewPostTweet(config *util.Config, dateNewCases string, numNewCases int, dateDeceased string, numDeceased int) (int, error) {
+func NewPostTweet(config *util.Config, tweetMsg string) (int, error) {
 	// Config Post Request
 	configTwitter := oauth1.NewConfig(config.TApiKey, config.TApiSecretKey)
 	token := oauth1.NewToken(config.TAccessToken, config.TAccessTokenSecret)
@@ -74,11 +74,8 @@ func NewPostTweet(config *util.Config, dateNewCases string, numNewCases int, dat
 	httpClient := configTwitter.Client(oauth1.NoContext, token)
 	client := twitter.NewClient(httpClient)
 
-	// Post New Tweet
-	msgTweet := fmt.Sprintf("MINSA publica hoy los datos del %v\nNuevos casos: %v\nNúmero de fallecidos:%v", dateNewCases, numNewCases, numDeceased)
-	fmt.Println(msgTweet)
 	// Post tweet
-	tweet, resp, err := client.Statuses.Update(msgTweet, nil)
+	tweet, resp, err := client.Statuses.Update(tweetMsg, nil)
 	if err != nil {
 		log.Println("Remote Twitter API Server not responding")
 		return 0, err
@@ -87,9 +84,9 @@ func NewPostTweet(config *util.Config, dateNewCases string, numNewCases int, dat
 	codeResp := resp.StatusCode
 	if codeResp != 200 {
 		log.Printf("Response:\n%v\n",resp)
-		return 1, nil
+		return codeResp, nil
 	}
 
 	log.Printf("Posted Tweet\n%v\n", tweet)
-	return 0, nil
+	return codeResp, nil
 }
