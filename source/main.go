@@ -24,20 +24,20 @@ func main() {
 
 	// Insert new daily cases
 	newCasesHandler := handler.NewCasesHandler(dbConn)
-	err = newCasesHandler.Create()	// get-read csv and insert into DB
+	dateDailyCases, numNewCases, err := newCasesHandler.Create()	// get-read csv and insert into DB
 	if err != nil {
-		log.Println("Insertion newCases record failed, ", err)
+		log.Println("No Insertion of new cases record, ", err)
 	}
 
 	// Insert new deceased cases
 	deceasedCasesHandler := handler.NewDeceasedCasesHandler(dbConn)
-	err = deceasedCasesHandler.Create()	// get-read csv and insert into DB
+	dateDeceased, numDeceased, err := deceasedCasesHandler.Create()	// get-read csv and insert into DB
 	if err != nil {
-		log.Println("Insertion deceasedCases record failed, ", err)
+		log.Println("No Insertion of new deceased Cases record, ", err)
 	}
 
 	// Post Tweet
-	codResp, err := handler.NewPostTweet(&config, 100, 10)
+	codResp, err := handler.NewPostTweet(&config, dateDailyCases, numNewCases, dateDeceased, numDeceased)
 	if err != nil {
 		log.Println("API not responding. Post tweet failed, ", err)
 	}

@@ -5,11 +5,11 @@ import (
 )
 
 type NewCasesRepo interface {
-	Create(report *model.CasesReport) error
+	Create(report *model.CasesReport) (int, error)
 	// GetByDate
 }
 
 type DeceasedCasesRepo interface {
-	Create(report *model.DeceasedReport) error
+	Create(report *model.DeceasedReport) (int, error)
 	// GetByDate
 }

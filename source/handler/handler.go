@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/angelmotta/covidAlerts-PE/source/driver"
 	"github.com/angelmotta/covidAlerts-PE/source/repository"
 	"github.com/angelmotta/covidAlerts-PE/source/repository/deceasedCases"
@@ -19,19 +20,22 @@ type newCasesRepo struct {
 // Return struct 'newCasesRepo' with repository Interface
 func NewCasesHandler(db *driver.DB) *newCasesRepo {
 	return &newCasesRepo{
-		repo: newCases.NewSQLNewCasesRepo(db.SQL),
+		repo: newCases.NewSQLNewCasesRepo(db.SQL),	// 'newCases' (interface implementation)
 	}
 }
 
 // Create daily newCases record
-func (newCases *newCasesRepo) Create() error {
+func (newCases *newCasesRepo) Create() (dateCases string, dailyCases int, err error) {
 	fileNameCases := "dataFiles/positivos_covid_3_2_2021.csv"
-	reportNewCases  := getReportCases(fileNameCases)	// Read and process CSV
-	err := newCases.repo.Create(&reportNewCases)	// insert into DB (using Interface)
+	reportNewCases  := getReportCases(fileNameCases)		// Read CSV and return a report
+	_, err = newCases.repo.Create(&reportNewCases)	// insert into DB (using Interface)
 	if err != nil {
-		return err
+		return
 	}
-	return nil
+
+	dateCases = reportNewCases.Date
+	dailyCases = reportNewCases.NewCases
+	return
 }
 
 // New Deceased Cases
@@ -47,18 +51,22 @@ func NewDeceasedCasesHandler(db *driver.DB) *deceasedCasesRepo {
 }
 
 // Create daily deceased record
-func (deceasedCases *deceasedCasesRepo) Create() error {
-	fileNameDeceased := "dataFiles/fallecidos_covid_3_2_2021.csv"
-	reportNewDeceased  := getReportDeceased(fileNameDeceased)
-	err := deceasedCases.repo.Create(&reportNewDeceased)	// insert into DB (using Interface)
+func (deceasedCases *deceasedCasesRepo) Create() (dateDeceased string, numDeceased int, err error) {
+	fileNameDeceased := "dataFiles/positivos_covid_1_4_2021.csv"
+	reportNewDeceased  := getReportDeceased(fileNameDeceased)	// Read CSV and return a report
+	_, err = deceasedCases.repo.Create(&reportNewDeceased)	// insert into DB (using Interface)
 	if err != nil {
-		return err
+		return
 	}
-	return nil
+
+	dateDeceased = reportNewDeceased.Date
+	numDeceased = reportNewDeceased.NewDeceased
+	return
 }
 
+
 // New Post Tweet
-func NewPostTweet(config *util.Config, numNewCases, numDeceased int) (int, error) {
+func NewPostTweet(config *util.Config, dateNewCases string, numNewCases int, dateDeceased string, numDeceased int) (int, error) {
 	// Config Post Request
 	configTwitter := oauth1.NewConfig(config.TApiKey, config.TApiSecretKey)
 	token := oauth1.NewToken(config.TAccessToken, config.TAccessTokenSecret)
@@ -67,8 +75,8 @@ func NewPostTweet(config *util.Config, numNewCases, numDeceased int) (int, error
 	client := twitter.NewClient(httpClient)
 
 	// Post New Tweet
-	// TODO: get message
-	msgTweet := "Hola mundo: testing :)"
+	msgTweet := fmt.Sprintf("MINSA publica hoy los datos del %v\nNuevos casos: %v\nNúmero de fallecidos:%v", dateNewCases, numNewCases, numDeceased)
+	fmt.Println(msgTweet)
 	// Post tweet
 	tweet, resp, err := client.Statuses.Update(msgTweet, nil)
 	if err != nil {
