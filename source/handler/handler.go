@@ -26,13 +26,14 @@ func NewCasesHandler(db *driver.DB) *newCasesRepo {
 // Create daily newCases record
 func (newCases *newCasesRepo) Create() (dateCases string, dailyCases int, err error) {
 	// TODO: Method HTTP to get CSV file
-	fileNameCases := "dataFiles/positivos_covid_2_4_2021.csv"
-	reportNewCases  := getReportCases(fileNameCases)		// Read CSV and return a report
+	fileNameCases := "dataFiles/positivos_covid_3_4_2021.csv"
+	reportNewCases  := getReportCases(fileNameCases, "")		// Read CSV and return a report
+	/*
 	_, err = newCases.repo.Create(&reportNewCases)	// insert into DB (using Interface)
 	if err != nil {	// if SQL insertion fail
 		return 		// return null date, null dailyCases and error value
 	}
-
+	*/
 	dateCases = reportNewCases.Date
 	dailyCases = reportNewCases.NewCases
 	return
@@ -52,13 +53,14 @@ func NewDeceasedCasesHandler(db *driver.DB) *deceasedCasesRepo {
 
 // Create daily deceased record
 func (deceasedCases *deceasedCasesRepo) Create() (dateDeceased string, numDeceased int, err error) {
-	fileNameDeceased := "dataFiles/fallecidos_covid_2_4_2021.csv"
-	reportNewDeceased  := getReportDeceased(fileNameDeceased)	// Read CSV and return a report
+	fileNameDeceased := "dataFiles/fallecidos_covid_3_4_2021.csv"
+	reportNewDeceased  := getReportDeceased(fileNameDeceased, "")	// Read CSV and return a report
+	/*
 	_, err = deceasedCases.repo.Create(&reportNewDeceased)	// insert into DB (using Interface)
 	if err != nil {
 		return
 	}
-
+	*/
 	dateDeceased = reportNewDeceased.Date
 	numDeceased = reportNewDeceased.NewDeceased
 	return

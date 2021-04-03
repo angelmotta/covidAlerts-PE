@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/angelmotta/covidAlerts-PE/source/driver"
 	"github.com/angelmotta/covidAlerts-PE/source/handler"
 	"github.com/angelmotta/covidAlerts-PE/source/util"
@@ -38,6 +39,19 @@ func main() {
 	}
 
 	// Twitter Post publication
+	fmt.Printf("\nDatos oficiales:\n%v nuevos casos (%v)\n%v fallecidos (%v)\n",numNewCases, dateDailyCases, numDeceased, dateDeceased)
+
+	// Read Tweets Msg
+	listTweets, isOK := handler.GetTweetMsg(dateDailyCases, numNewCases, dateDeceased, numDeceased)
+	if isOK != true {
+		os.Exit(0)
+	}
+	// Send Tweets
+	for _, tweet := range listTweets {
+		fmt.Println(tweet)
+		fmt.Println()
+	}
+	/*
 	tweetMsg, isValid := handler.GetTweetMsg(dateDailyCases, numNewCases, dateDeceased, numDeceased)
 	if isValid != true {
 		os.Exit(0)
@@ -53,4 +67,5 @@ func main() {
 		log.Println("Post tweet failed, check response message from API Server")
 	}
 	log.Println("Post tweet Done!")
+	 */
 }
