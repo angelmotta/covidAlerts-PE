@@ -17,8 +17,8 @@ type Config struct {
 	TAccessTokenSecret	string `mapstructure:"TWITTER_ACCESS_TOKEN_SECRET"`
 	UrlNewCases			string `mapstructure:"URL_POSITIVE_CASES"`
 	UrlDeceased			string `mapstructure:"URL_DECEASED_CASES"`
-	DirPositiveFiles	string `mapstructure:"dataFiles/"`
-	DirDeceasedFiles	string `mapstructure:"dataFiles/"`
+	DirPositiveFiles	string `mapstructure:"DIR_POSITIVE_FILES"`
+	DirDeceasedFiles	string `mapstructure:"DIR_DECEASED_FILES"`
 }
 
 // LoadConfig reads configuration from file or environment variables

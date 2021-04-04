@@ -5,6 +5,7 @@ import (
 	"github.com/angelmotta/covidAlerts-PE/source/model"
 	"github.com/angelmotta/covidAlerts-PE/source/repository"
 	"log"
+	"time"
 )
 
 // pgsqlDeceasedCasesRepo implements the interface 'repository.DeceasedCasesRepo'
@@ -19,14 +20,17 @@ func NewSQLDeceasedCasesRepo(Conn *sql.DB) repository.DeceasedCasesRepo {
 
 func (pgRepo *pgsqlDeceasedCasesRepo) Create(report *model.DeceasedReport) (int, error) {
 	// Prepare statement
-	stmt, err := pgRepo.Conn.Prepare("INSERT INTO dailydeceased (deceasedcases_date, newdeceased_amount, totaldeceased) VALUES ($1, $2, $3)")
+	stmtSQL := "INSERT INTO dailydeceased (deceasedcases_date, newdeceased_amount, totaldeceased, tsrecord) VALUES ($1, $2, $3, $4)"
+	stmt, err := pgRepo.Conn.Prepare(stmtSQL)
 	if err != nil {
 		return 0, err
 	}
 	defer stmt.Close()
 
 	// Execute Sql statement
-	res, err := stmt.Exec(report.Date, report.NewDeceased, report.TotalDeceased)
+	dateTime := time.Now()
+	tsRecord := dateTime.Format("2006-01-02 15:04:05")
+	res, err := stmt.Exec(report.Date, report.NewDeceased, report.TotalDeceased, tsRecord)
 	if err != nil {
 		log.Println("SQL INSERT Execution failed, ", err)
 		log.Printf("SQL values were, deceasedcases_date: %v, newdeceased_amount: %v, totaldeceased: %v \n", report.Date, report.NewDeceased, report.TotalDeceased)

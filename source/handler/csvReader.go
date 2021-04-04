@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"bufio"
 	"encoding/csv"
 	"fmt"
 	"github.com/angelmotta/covidAlerts-PE/source/model"
@@ -98,52 +97,34 @@ func getReportCases(fileName, dateRowStr string) model.CasesReport {
 		log.Println("CSV File with unexpected column headers")
 		return model.CasesReport{}
 	}
-
 	// Try Open file
 	csvFile, err := os.Open(fileName)
 	checkForError(err)
 	defer csvFile.Close()
-
 	// Setup a csv reader
 	csvReader := csv.NewReader(csvFile)
 	csvReader.Comma = ';'
-
 	// discard first line
 	_, err = csvReader.Read()
 	checkForError(err)
 
-	// vars for Struct attributes
+	// vars to return in Struct attributes
 	numNewCasesDate := 0
 	totalCases := 0
 	casesByDept := make(map[string]int)
-	fileReport := fmt.Sprintf("dataFiles/report_positivos_%v.txt", dateRowStr)
-	fileHand, e := os.Create(fileReport)
-	if e != nil {
-		panic(e)
-	}
-	defer fileHand.Close()
-	wFile := bufio.NewWriter(fileHand)
-	log.Println("Searching data for date:", dateRowStr)
-	// iterate over the entire file
+
+	// iterate over the CSV file
+	log.Printf("Searching data in '%v' for date: %v\n", fileName, dateRowStr)
 	for {
 		record, err := csvReader.Read() // get a record string[]
 		if err == io.EOF { break }
 		checkForError(err)
-
 		// Count total covid cases from the beginning of the pandemic
 		totalCases++
-
 		// Looking for new cases in last day
 		if dateRowStr == record[8] {  // Compare specific 'DATE' with 'FECHA_RESULTADO' field
 			// new case
 			numNewCasesDate++
-			// Write file
-			line := fmt.Sprintln(record[0],record[1],record[2],record[3],record[4],record[5],record[6],record[7],record[8])
-			_, e = wFile.WriteString(line)
-			if e != nil {
-				log.Println("Error Writing line to file")
-				panic(e)
-			}
 			// Get cases by 'DEPARTAMENTO'
 			dept := record[2]
 			value, isPresent := casesByDept[dept]
@@ -155,11 +136,7 @@ func getReportCases(fileName, dateRowStr string) model.CasesReport {
 			}
 		}
 	}
-	e = wFile.Flush()
-	if e != nil {
-		log.Println("Flush error")
-		panic(e)
-	}
+
 	dateStr := getDateFormat(dateRowStr) // convert to date format 'YYYY-MM-DD'
 	myNewReport := model.CasesReport{Date: dateStr, NewCases: numNewCasesDate, TotalCases: totalCases, NewCasesByDept: casesByDept}
 	return myNewReport
@@ -167,9 +144,6 @@ func getReportCases(fileName, dateRowStr string) model.CasesReport {
 
 func getReportDeceased(fileName, dateRowStr string) model.DeceasedReport {
 	fmt.Printf("\n**** getReportDeceased ***\n")
-	//lastDay := getLastDay(fileName)
-	//lastDay, isOK := getLastDayV2(fileName, "fallecidos")
-	//var lastDay string
 	isOK := true
 	if dateRowStr == "" {
 		dateRowStr, isOK = getLastDayV2(fileName, "fallecidos")
@@ -184,20 +158,20 @@ func getReportDeceased(fileName, dateRowStr string) model.DeceasedReport {
 	csvFile, err := os.Open(fileName)
 	checkForError(err)
 	defer csvFile.Close()
-
 	// Setup a csv reader
 	csvReader := csv.NewReader(csvFile)
 	csvReader.Comma = ';'
-
 	// discard first line of column headers
 	_, err = csvReader.Read()
 	checkForError(err)
 
-	// iterate over the csv file
+	// vars to return in Struct attributes
 	totalDeceased := 0
 	numDeceasedDate := 0
 	deceaseByDept := make(map[string]int)
-	log.Println("Searching data for date:", dateRowStr)
+
+	// Iterate over the CSV file
+	log.Printf("Searching data in '%v' for date: %v\n", fileName, dateRowStr)
 	for {
 		record, err := csvReader.Read() // get a record string[]
 		if err == io.EOF { break }
