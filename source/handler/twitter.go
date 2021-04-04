@@ -11,7 +11,7 @@ func GetTweetMsg(dateNewCases string, numNewCases int, dateDeceased string, numD
 	// Check base case
 	if dateNewCases == "" && dateDeceased == "" {
 		log.Println("'dateNewCases' and 'dateDeceased' are blank values")
-		return tweetList, false
+		return tweetList, false // slice with zero elements
 	}
 
 	// Prepare Tweet

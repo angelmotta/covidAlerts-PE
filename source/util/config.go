@@ -15,6 +15,10 @@ type Config struct {
 	TApiSecretKey		string `mapstructure:"TWITTER_API_SECRET_KEY"`
 	TAccessToken		string `mapstructure:"TWITTER_ACCESS_TOKEN"`
 	TAccessTokenSecret	string `mapstructure:"TWITTER_ACCESS_TOKEN_SECRET"`
+	UrlNewCases			string `mapstructure:"URL_POSITIVE_CASES"`
+	UrlDeceased			string `mapstructure:"URL_DECEASED_CASES"`
+	DirPositiveFiles	string `mapstructure:"dataFiles/"`
+	DirDeceasedFiles	string `mapstructure:"dataFiles/"`
 }
 
 // LoadConfig reads configuration from file or environment variables
