@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/angelmotta/covidAlerts-PE/source/driver"
 	"github.com/angelmotta/covidAlerts-PE/source/repository"
 	"github.com/angelmotta/covidAlerts-PE/source/repository/deceasedCases"
@@ -63,9 +64,26 @@ func (deceasedCases *deceasedCasesRepo) Create(filePathDeceased string) (dateDec
 	return
 }
 
+func sendTweetMsg(client *twitter.Client, listTweets []string) error {
+	for _, tweet := range listTweets {		// Post Tweet
+		// Tweeting
+		fmt.Println("Sending the following tweet")
+		fmt.Println(tweet)
+		fmt.Println()
+		// Send Tweet
+		_, respHttp, err := client.Statuses.Update(tweet, nil)
+		if err != nil {
+			log.Println("client.Statuses.Update(tweetMsg) error:", err)
+			log.Println("client.Statuses.Update(tweetMsg) response HTTP:", respHttp.StatusCode)
+			return err
+		}
+		fmt.Println("Tweet successfully sent")
+	}
+	return nil
+}
 
 // New Post Tweet
-func NewPostTweet(config *util.Config, tweetMsg string) (int, error) {
+func PostTweet(config *util.Config, listTweets []string) error {
 	// Config Post Request
 	configTwitter := oauth1.NewConfig(config.TApiKey, config.TApiSecretKey)
 	token := oauth1.NewToken(config.TAccessToken, config.TAccessTokenSecret)
@@ -73,19 +91,24 @@ func NewPostTweet(config *util.Config, tweetMsg string) (int, error) {
 	httpClient := configTwitter.Client(oauth1.NoContext, token)
 	client := twitter.NewClient(httpClient)
 
-	// Post tweet
-	tweet, resp, err := client.Statuses.Update(tweetMsg, nil)
+	// Verify Credentials
+	verifyParams := &twitter.AccountVerifyParams{
+		SkipStatus:   twitter.Bool(true),
+		IncludeEmail: twitter.Bool(true),
+	}
+	user, httpResCode, err := client.Accounts.VerifyCredentials(verifyParams)
 	if err != nil {
-		log.Println("Remote Twitter API Server not responding")
-		return 0, err
+		log.Println("VerifyCredentials() Error:", err)
+		log.Println("HTTP Response Code:", httpResCode.StatusCode)
+		return err
 	}
+	fmt.Println("HTTP Twitter Credential StatusCode:", httpResCode.StatusCode)
+	fmt.Println("Twitter User's Account: ", user.Name)
 
-	codeResp := resp.StatusCode
-	if codeResp != 200 {
-		log.Printf("Response:\n%v\n",resp)
-		return codeResp, nil
+	// Post tweet
+	err = sendTweetMsg(client, listTweets)		// Send Tweets
+	if err != nil {
+		log.Println("sendTweetMsg() error:", err)
 	}
-
-	log.Printf("Posted Tweet\n%v\n", tweet)
-	return codeResp, nil
+	return nil
 }

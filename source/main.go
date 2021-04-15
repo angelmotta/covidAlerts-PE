@@ -76,8 +76,7 @@ func main() {
 			log.Println("No Insertion of new deceased Cases record, ", err)
 		}
 	}
-
-
+	
 	// Twitter Post publication
 	fmt.Printf("\nDatos oficiales obtenidos:\n%v nuevos casos (%v)\n%v fallecidos (%v)\n",numNewCases, dateDailyCases, numDeceased, dateDeceased)
 
@@ -94,21 +93,13 @@ func main() {
 		fmt.Println(tweet)
 		fmt.Println()
 	}
-	/*
-	tweetMsg, isValid := handler.GetTweetMsg(dateDailyCases, numNewCases, dateDeceased, numDeceased)
-	if isValid != true {
-		os.Exit(0)
-	}
-	log.Printf("Prepared Tweet: \n%v\n", tweetMsg)
 
 	// Post Tweet
-	codResp, err := handler.NewPostTweet(&config, tweetMsg)
+	/*
+	err = handler.PostTweet(&config, listTweets)
 	if err != nil {
-		log.Println("API not responding. Post tweet failed, ", err)
-	}
-	if codResp != 200 {
-		log.Println("Post tweet failed, check response message from API Server")
+		log.Println("PostTweet() failed, ", err)
 	}
 	log.Println("Post tweet Done!")
-	 */
+	*/
 }
