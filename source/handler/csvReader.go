@@ -87,7 +87,7 @@ func getLastDayV2(fileName, tagFile string) (string, bool) {
 }
 
 func getReportCases(fileName, dateRowStr string) model.CasesReport {
-	fmt.Printf("\n**** getReportCases ****\n")
+	fmt.Println("**** getReportCases ****")
 	isOK := true
 	if dateRowStr == "" {
 		dateRowStr, isOK = getLastDayV2(fileName, "positivos")
@@ -143,7 +143,7 @@ func getReportCases(fileName, dateRowStr string) model.CasesReport {
 }
 
 func getReportDeceased(fileName, dateRowStr string) model.DeceasedReport {
-	fmt.Printf("\n**** getReportDeceased ***\n")
+	fmt.Println("**** getReportDeceased ***")
 	isOK := true
 	if dateRowStr == "" {
 		dateRowStr, isOK = getLastDayV2(fileName, "fallecidos")

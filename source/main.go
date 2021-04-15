@@ -12,6 +12,7 @@ import (
 
 func main() {
 	// Load Config values
+	fmt.Println("\n**** START EXECUTION ****")
 	config, err := util.LoadConfig(".")
 	if err != nil {
 		log.Fatal("Can not load configuration", err)
@@ -24,10 +25,11 @@ func main() {
 	}
 	log.Println("Successfully connected to DB")
 
-	// Get Positive Cases CSV File
+	// Download Positive Cases CSV File
 	positiveFilePath := config.DirPositiveFiles+"positivos_covid.csv"
-	//positiveFilePath := config.DirPositiveFiles+"positivos_covid_3_4_2021.csv"
-	err = handler.DownloadFile(config.UrlNewCases, positiveFilePath) 	// Download CSV File
+	// Test using local file
+	//positiveFilePath := config.DirPositiveFiles+"15_04_2021_1300_positivos_covid.csv"
+	err = handler.DownloadFile(config.UrlNewCases, positiveFilePath) 	// Get CSV File
 	isPositiveFileOk := true
 
 	if err != nil {
@@ -35,9 +37,8 @@ func main() {
 		isPositiveFileOk = false
 	}
 	if isPositiveFileOk {
-		log.Println("Positive file stored OK in:", positiveFilePath)
+		log.Println("Positive csv file is stored OK in:", positiveFilePath)
 	}
-
 
 	// Insert new daily cases
 	var dateDailyCases string
@@ -50,21 +51,20 @@ func main() {
 		}
 	}
 
-	// Get Deceased Cases CSV File
-	//deceasedFilePath := config.DirDeceasedFiles+"fallecidos_covid_3_4_2021.csv"
+	// Download Deceased Cases CSV File
 	deceasedFilePath := config.DirDeceasedFiles+"fallecidos_covid.csv"
-	err = handler.DownloadFile(config.UrlDeceased, deceasedFilePath)	// Download CSV File
+	// Test using local file
+	//deceasedFilePath := config.DirDeceasedFiles+"15_04_2021_1300_fallecidos_covid.csv"
+	err = handler.DownloadFile(config.UrlDeceased, deceasedFilePath) // Get CSV file
 	isDeceasedFileOk := true
 
 	if err != nil {
 		log.Println("DownloadFile() deceased error: ", err)
 		isDeceasedFileOk = false
 	}
-
 	if isDeceasedFileOk {
 		log.Println("Deceased File stored OK in:", deceasedFilePath)
 	}
-
 
 	// Insert new deceased cases
 	var dateDeceased string
@@ -76,30 +76,31 @@ func main() {
 			log.Println("No Insertion of new deceased Cases record, ", err)
 		}
 	}
-	
-	// Twitter Post publication
-	fmt.Printf("\nDatos oficiales obtenidos:\n%v nuevos casos (%v)\n%v fallecidos (%v)\n",numNewCases, dateDailyCases, numDeceased, dateDeceased)
 
-	// Read Tweets Msg
-	listTweets, isOK := handler.GetTweetMsg(dateDailyCases, numNewCases, dateDeceased, numDeceased)
-	if isOK != true {
+	// Display information collected from files
+	fmt.Printf("\nDatos obtenidos:\n%v nuevos casos correspondiente al '%v'\n%v fallecidos correspondiente al '%v'\n",numNewCases, dateDailyCases, numDeceased, dateDeceased)
+
+	// Twitter Post publication
+	// Generate Tweets Messages
+	listTweets, isNewInfo := handler.GenerateTweetMsg(dateDailyCases, numNewCases, dateDeceased, numDeceased)
+	if isNewInfo != true {
 		log.Println("Not required creation of new Tweets")
 		os.Exit(0)
 	}
-	// Send Tweets
-	// Only print tweets to the console
-	log.Println("Display new Tweets")
+
+	// Display tweets
+	log.Println("Display Tweet message:")
 	for _, tweet := range listTweets {
 		fmt.Println(tweet)
 		fmt.Println()
 	}
 
-	// Post Tweet
+	// Send Tweet
 	/*
 	err = handler.PostTweet(&config, listTweets)
 	if err != nil {
 		log.Println("PostTweet() failed, ", err)
 	}
-	log.Println("Post tweet Done!")
-	*/
+	log.Println("**** END EXECUTION ***")
+	 */
 }

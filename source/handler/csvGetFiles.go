@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 )
 
 func DownloadFile(url, filepath string) error {
+	fmt.Println("**** DownloadFile ****")
 	outFile, err := os.Create(filepath + ".tmp")
 	if err != nil {
 		log.Println("os.Create(): ", err)

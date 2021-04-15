@@ -26,6 +26,7 @@ func NewCasesHandler(db *driver.DB) *newCasesRepo {
 
 // Create daily newCases record
 func (newCases *newCasesRepo) Create(filePathPositive string) (dateCases string, dailyCases int, err error) {
+	fmt.Println("**** Create daily New cases record ****")
 	// Read CSV and return a report struct
 	reportNewCases  := getReportCases(filePathPositive, "")
 	// Insert into DB (using Interface)
@@ -52,6 +53,7 @@ func NewDeceasedCasesHandler(db *driver.DB) *deceasedCasesRepo {
 
 // Create daily deceased record
 func (deceasedCases *deceasedCasesRepo) Create(filePathDeceased string) (dateDeceased string, numDeceased int, err error) {
+	fmt.Println("**** Create daily Deceased cases record ****")
 	// Read CSV and return a report
 	reportNewDeceased  := getReportDeceased(filePathDeceased, "")
 	// Insert into DB (using Interface)
@@ -64,26 +66,9 @@ func (deceasedCases *deceasedCasesRepo) Create(filePathDeceased string) (dateDec
 	return
 }
 
-func sendTweetMsg(client *twitter.Client, listTweets []string) error {
-	for _, tweet := range listTweets {		// Post Tweet
-		// Tweeting
-		fmt.Println("Sending the following tweet")
-		fmt.Println(tweet)
-		fmt.Println()
-		// Send Tweet
-		_, respHttp, err := client.Statuses.Update(tweet, nil)
-		if err != nil {
-			log.Println("client.Statuses.Update(tweetMsg) error:", err)
-			log.Println("client.Statuses.Update(tweetMsg) response HTTP:", respHttp.StatusCode)
-			return err
-		}
-		fmt.Println("Tweet successfully sent")
-	}
-	return nil
-}
-
 // New Post Tweet
 func PostTweet(config *util.Config, listTweets []string) error {
+	fmt.Println("**** Post Tweet ****")
 	// Config Post Request
 	configTwitter := oauth1.NewConfig(config.TApiKey, config.TApiSecretKey)
 	token := oauth1.NewToken(config.TAccessToken, config.TAccessTokenSecret)
@@ -102,8 +87,8 @@ func PostTweet(config *util.Config, listTweets []string) error {
 		log.Println("HTTP Response Code:", httpResCode.StatusCode)
 		return err
 	}
-	fmt.Println("HTTP Twitter Credential StatusCode:", httpResCode.StatusCode)
-	fmt.Println("Twitter User's Account: ", user.Name)
+	log.Println("HTTP Twitter Credential StatusCode:", httpResCode.StatusCode)
+	log.Println("Twitter User's Account: ", user.Name)
 
 	// Post tweet
 	err = sendTweetMsg(client, listTweets)		// Send Tweets
