@@ -17,4 +17,6 @@ This is project is under development, and the following is the first proposal wh
 
 ## Proposal
 ### Architecture
+This first version implement the following architecture.  
+![Achitecture Diagram](images/ArchitectureDiagram_CovidAlertePE.png)
 
