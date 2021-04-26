@@ -85,6 +85,7 @@ func main() {
 	listTweets, isNewInfo := handler.GenerateTweetMsg(dateDailyCases, numNewCases, dateDeceased, numDeceased)
 	if isNewInfo != true {
 		log.Println("Not required creation of new Tweets")
+		log.Println("**** END EXECUTION ***")
 		os.Exit(0)
 	}
 
@@ -102,5 +103,5 @@ func main() {
 		log.Println("PostTweet() failed, ", err)
 	}
 	log.Println("**** END EXECUTION ***")
-	 */
+	*/
 }
