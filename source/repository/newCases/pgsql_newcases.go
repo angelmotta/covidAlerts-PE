@@ -14,8 +14,8 @@ type pgsqlNewCasesRepo struct {
 }
 
 // Return interface implementation
-func NewSQLNewCasesRepo(Conn *sql.DB) repository.NewCasesRepo {
-	return &pgsqlNewCasesRepo{Conn}	// return interface
+func NewSQLNewCasesRepo(Conn *sql.DB) repository.NewCasesRepo { // return interface
+	return &pgsqlNewCasesRepo{Conn}
 }
 
 // pgsqlNewCasesRepo implements 'pgsqlNewCasesRepo' Interface

@@ -25,11 +25,12 @@ func main() {
 	}
 	log.Println("Successfully connected to DB")
 
-	// Download Positive Cases CSV File
+	// Get Positive Cases CSV File
 	positiveFilePath := config.DirPositiveFiles+"positivos_covid.csv"
 	// Test using local file
-	//positiveFilePath := config.DirPositiveFiles+"15_04_2021_1300_positivos_covid.csv"
-	err = handler.DownloadFile(config.UrlNewCases, positiveFilePath) 	// Get CSV File
+	//positiveFilePath := config.DirPositiveFiles+"test_positivos_covid_26_04_2021.csv"
+	// Download CSV file
+	err = handler.DownloadFile(config.UrlNewCases, positiveFilePath)
 	isPositiveFileOk := true
 
 	if err != nil {
@@ -51,11 +52,13 @@ func main() {
 		}
 	}
 
-	// Download Deceased Cases CSV File
+	// Get Deceased Cases CSV File
 	deceasedFilePath := config.DirDeceasedFiles+"fallecidos_covid.csv"
 	// Test using local file
-	//deceasedFilePath := config.DirDeceasedFiles+"15_04_2021_1300_fallecidos_covid.csv"
-	err = handler.DownloadFile(config.UrlDeceased, deceasedFilePath) // Get CSV file
+	//deceasedFilePath := config.DirDeceasedFiles+"test_fallecidos_covid_26_04_2021.csv"
+	//err = nil
+	// Download CSV file
+	err = handler.DownloadFile(config.UrlDeceased, deceasedFilePath)
 	isDeceasedFileOk := true
 
 	if err != nil {
@@ -85,7 +88,7 @@ func main() {
 	listTweets, isNewInfo := handler.GenerateTweetMsg(dateDailyCases, numNewCases, dateDeceased, numDeceased)
 	if isNewInfo != true {
 		log.Println("Not required creation of new Tweets")
-		log.Println("**** END EXECUTION ***")
+		fmt.Println("**** END EXECUTION ***")
 		os.Exit(0)
 	}
 
@@ -97,11 +100,9 @@ func main() {
 	}
 
 	// Send Tweet
-	/*
 	err = handler.PostTweet(&config, listTweets)
 	if err != nil {
 		log.Println("PostTweet() failed, ", err)
 	}
-	log.Println("**** END EXECUTION ***")
-	*/
+	fmt.Println("**** END EXECUTION ***")
 }

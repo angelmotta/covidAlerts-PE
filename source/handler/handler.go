@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"github.com/angelmotta/covidAlerts-PE/source/driver"
 	"github.com/angelmotta/covidAlerts-PE/source/repository"
@@ -30,13 +31,21 @@ func (newCases *newCasesRepo) Create(filePathPositive string) (dateCases string,
 	// Read CSV and return a report struct
 	reportNewCases  := getReportCases(filePathPositive, "")
 	// Insert into DB (using Interface)
-	_, err = newCases.repo.Create(&reportNewCases)
-	if err != nil {	// if SQL insertion fail
-		return 		// return null date, null dailyCases and error value
+	if reportNewCases.NewCases != 0 {
+		_, err = newCases.repo.Create(&reportNewCases)
+		if err != nil {	// if SQL insertion fail
+			return dateCases, dailyCases, err	// return null values and error value
+		}
+		dateCases = reportNewCases.Date
+		dailyCases = reportNewCases.NewCases
+	} else {
+		log.Println("Data in CSV File inconsistent. No insertion executed")
+		log.Println("File is supposed updated to date: ", reportNewCases.Date, " but...")
+		log.Println("New cases value in that date is: ", reportNewCases.NewCases)
+		// Return null values and error
+		return 	dateCases, dailyCases, errors.New("zero value new positive cases")
 	}
-	dateCases = reportNewCases.Date
-	dailyCases = reportNewCases.NewCases
-	return
+	return dateCases, dailyCases, nil
 }
 
 // New Deceased Cases
@@ -57,13 +66,20 @@ func (deceasedCases *deceasedCasesRepo) Create(filePathDeceased string) (dateDec
 	// Read CSV and return a report
 	reportNewDeceased  := getReportDeceased(filePathDeceased, "")
 	// Insert into DB (using Interface)
-	_, err = deceasedCases.repo.Create(&reportNewDeceased)
-	if err != nil {
-		return
+	if reportNewDeceased.NewDeceased != 0 {
+		_, err = deceasedCases.repo.Create(&reportNewDeceased)
+		if err != nil {
+			return dateDeceased, numDeceased, err // return null values and error value
+		}
+		dateDeceased = reportNewDeceased.Date
+		numDeceased = reportNewDeceased.NewDeceased
+	} else {
+		log.Println("Data in CSV File inconsistent. No insertion executed")
+		log.Println("File is supposed updated to date: ", reportNewDeceased.Date, " but...")
+		log.Println("New cases value in that date is: ", reportNewDeceased.NewDeceased)
+		return dateDeceased, numDeceased, errors.New("zero value deceased")
 	}
-	dateDeceased = reportNewDeceased.Date
-	numDeceased = reportNewDeceased.NewDeceased
-	return
+	return dateDeceased, numDeceased, nil
 }
 
 // New Post Tweet

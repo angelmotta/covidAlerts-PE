@@ -20,7 +20,7 @@ func GenerateTweetMsg(dateNewCases string, numNewCases int, dateDeceased string,
 	if dateNewCases == dateDeceased { // Ideal case: 1 Tweet with full information
 		tweetMsg = fmt.Sprintf("📊 MINSA publica hoy información correspondiente al %v\n\U0001F9A0 %v nuevos casos\n\U0001FAA6 %v fallecidos", dateNewCases, numNewCases, numDeceased)
 		tweetList = append(tweetList, tweetMsg)
-	} else { // 1 or 2 Tweets each one with specific information (num new cases or num deceased)
+	} else { // create 1 or 2 Tweets (each one with different information)
 		log.Println("Different dates detected for New_Positive_Cases and Deceased_Cases")
 		log.Printf("dateNewCases: '%v', dateDeceased: '%v'\n", dateNewCases, dateDeceased)
 		// Prepare Tweet for New Positive Cases

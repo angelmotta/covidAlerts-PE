@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -23,29 +24,9 @@ func getDateFormat(dateVal string) string {
 	return newDateStr
 }
 
-// Return most recent date field from csv file
-func getLastDay(fileName string) string {
-	// Try Open file
-	csvFile, err := os.Open(fileName)
-	checkForError(err)
-	defer csvFile.Close()
-
-	// setup csvReader
-	csvReader := csv.NewReader(csvFile)
-	csvReader.Comma = ';'
-
-	// discard first line (column headers)
-	_, err = csvReader.Read()
-	checkForError(err)
-
-	// get from the first line the 'FECHA_CORTE' field
-	record, err := csvReader.Read()
-	checkForError(err)
-	return record[0]
-}
-
 // Return false if csv column headers are not the expected otherwise true
-func getLastDayV2(fileName, tagFile string) (string, bool) {
+func getLastDay(fileName, tagFile string) (string, bool) {
+	log.Println("Searching most recent date in csv file...")
 	// Try Open file
 	csvFile, err := os.Open(fileName)
 	if err != nil {
@@ -58,16 +39,19 @@ func getLastDayV2(fileName, tagFile string) (string, bool) {
 	csvReader := csv.NewReader(csvFile)
 	csvReader.Comma = ';'
 
-	// Check if column headers are the expected ones
+	// Check if column header is the expected one
+	idx := 0
 	columnHead, _ := csvReader.Read() // get a columnHead string[]
 	if tagFile == "positivos" {
-		if columnHead[8] != "FECHA_RESULTADO" {
+		idx = 8
+		if columnHead[idx] != "FECHA_RESULTADO" {
 			log.Printf("format file '%v' unexpected. Something has changed", fileName)
 			log.Printf("Expected 'FECHA_RESULTADO' at index 8, found '%v'", columnHead[8])
 			return "", false
 		}
 	} else if tagFile == "fallecidos" {
-		if columnHead[2] != "FECHA_FALLECIMIENTO" {
+		idx = 2
+		if columnHead[idx] != "FECHA_FALLECIMIENTO" {
 			log.Printf("format file '%v' unexpected. Something has changed", fileName)
 			log.Printf("Expected 'FECHA_FALLECIMIENTO' at index 2, found '%v'", columnHead[2])
 			return "", false
@@ -77,20 +61,60 @@ func getLastDayV2(fileName, tagFile string) (string, bool) {
 		return "", false
 	}
 
-	// Return most recent Date
-	record, err := csvReader.Read() // from second line get 'FECHA_CORTE' field
+	// Get most recent Date
+	record, err := csvReader.Read() // from second line
 	if err != nil {
 		log.Println(err)
 		return "", false
 	}
-	return record[0], true
+	fechaCorte := record[0]
+	mostRecentDateStr := record[idx] // Get date from column at idx 2 or 8
+	mostRecentDate, err := strconv.Atoi(mostRecentDateStr)
+	if err != nil {
+		log.Println("Error casting date string to int", err)
+		return "", false
+	}
+	// If 'FECHA_CORTE' has a record in csv return it as a most recent date
+	if fechaCorte == mostRecentDateStr {
+		log.Println("'FECHA_CORTE' is valid as most recent date")
+		return fechaCorte, true
+	}
+	// Read the rest of file and get the most recent Date
+	for {
+		record, err := csvReader.Read() // get a record string[]
+		if err == io.EOF { break }	// EOF
+		if err != nil {
+			log.Println("Error reading csv File:", err)
+		}
+		currDateStr := record[idx]
+		if currDateStr == "" { continue }
+		// If 'FECHA_CORTE' has at least one record return it as a valid most recent date
+		if fechaCorte == currDateStr {
+			log.Println("'FECHA_CORTE' in csv file is valid. Most recent date", fechaCorte)
+			return fechaCorte, true
+		}
+		currDate, err := strconv.Atoi(currDateStr)
+		if err != nil {
+			log.Println(record)
+			log.Println(currDateStr)
+			log.Println("Error casting date string to int", err)
+			return "", false
+		}
+		if currDate > mostRecentDate {
+			mostRecentDate = currDate
+		}
+	}
+	mostRecentDateStr = strconv.Itoa(mostRecentDate)
+	log.Println("'FECHA_CORTE' has not records in csv file")
+	log.Println("Most recent date found in csv file is:", mostRecentDateStr)
+	return mostRecentDateStr, true
 }
 
 func getReportCases(fileName, dateRowStr string) model.CasesReport {
 	fmt.Println("**** getReportCases ****")
 	isOK := true
 	if dateRowStr == "" {
-		dateRowStr, isOK = getLastDayV2(fileName, "positivos")
+		dateRowStr, isOK = getLastDay(fileName, "positivos")
 	}
 
 	if isOK != true {
@@ -146,7 +170,7 @@ func getReportDeceased(fileName, dateRowStr string) model.DeceasedReport {
 	fmt.Println("**** getReportDeceased ***")
 	isOK := true
 	if dateRowStr == "" {
-		dateRowStr, isOK = getLastDayV2(fileName, "fallecidos")
+		dateRowStr, isOK = getLastDay(fileName, "fallecidos")
 	}
 
 	if isOK != true {
