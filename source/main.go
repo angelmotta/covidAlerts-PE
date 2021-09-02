@@ -15,7 +15,7 @@ func main() {
 	fmt.Println("\n**** START EXECUTION ****")
 	config, err := util.LoadConfig(".")
 	if err != nil {
-		log.Fatal("Can not load configuration", err)
+		log.Fatal("Can not load configuration: ", err)
 	}
 
 	// Prepare DB Connection
