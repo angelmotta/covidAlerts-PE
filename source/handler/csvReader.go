@@ -39,19 +39,19 @@ func getLastDay(fileName, tagFile string) (string, bool) {
 	csvReader := csv.NewReader(csvFile)
 	csvReader.Comma = ';'
 
-	// Check if column header is the expected one
-	idx := 0
+	// Check if column header of Date is the expected one
+	idxDateField := 0
 	columnHead, _ := csvReader.Read() // get a columnHead string[]
 	if tagFile == "positivos" {
-		idx = 8
-		if columnHead[idx] != "FECHA_RESULTADO" {
-			log.Printf("format file '%v' unexpected. Something has changed", fileName)
+		idxDateField = 7
+		if columnHead[idxDateField] != "FECHA_RESULTADO" {
+			log.Printf("Format file '%v' unexpected. Something has changed", fileName)
 			log.Printf("Expected 'FECHA_RESULTADO' at index 8, found '%v'", columnHead[8])
 			return "", false
 		}
 	} else if tagFile == "fallecidos" {
-		idx = 2
-		if columnHead[idx] != "FECHA_FALLECIMIENTO" {
+		idxDateField = 1
+		if columnHead[idxDateField] != "FECHA_FALLECIMIENTO" {
 			log.Printf("format file '%v' unexpected. Something has changed", fileName)
 			log.Printf("Expected 'FECHA_FALLECIMIENTO' at index 2, found '%v'", columnHead[2])
 			return "", false
@@ -68,7 +68,7 @@ func getLastDay(fileName, tagFile string) (string, bool) {
 		return "", false
 	}
 	fechaCorte := record[0]
-	mostRecentDateStr := record[idx] // Get date from column at idx 2 or 8
+	mostRecentDateStr := record[idxDateField] // Get date from column at idxDateField 2 or 8
 	mostRecentDate, err := strconv.Atoi(mostRecentDateStr)
 	if err != nil {
 		log.Println("Error casting date string to int", err)
@@ -86,7 +86,7 @@ func getLastDay(fileName, tagFile string) (string, bool) {
 		if err != nil {
 			log.Println("Error reading csv File:", err)
 		}
-		currDateStr := record[idx]
+		currDateStr := record[idxDateField]
 		if currDateStr == "" { continue }
 		// If 'FECHA_CORTE' has at least one record return it as a valid most recent date
 		if fechaCorte == currDateStr {
@@ -139,6 +139,8 @@ func getReportCases(fileName, dateRowStr string) model.CasesReport {
 
 	// iterate over the CSV file
 	log.Printf("Searching data in '%v' for date: %v\n", fileName, dateRowStr)
+	idxDateResult := 7
+	idxCity := 1
 	for {
 		record, err := csvReader.Read() // get a record string[]
 		if err == io.EOF { break }
@@ -146,11 +148,11 @@ func getReportCases(fileName, dateRowStr string) model.CasesReport {
 		// Count total covid cases from the beginning of the pandemic
 		totalCases++
 		// Looking for new cases in last day
-		if dateRowStr == record[8] {  // Compare specific 'DATE' with 'FECHA_RESULTADO' field
+		if dateRowStr == record[idxDateResult] {  // Compare specific 'DATE' with 'FECHA_RESULTADO' field
 			// new case
 			numNewCasesDate++
 			// Get cases by 'DEPARTAMENTO'
-			dept := record[2]
+			dept := record[idxCity]
 			value, isPresent := casesByDept[dept]
 			if isPresent {
 				casesByDept[dept]++
@@ -196,6 +198,8 @@ func getReportDeceased(fileName, dateRowStr string) model.DeceasedReport {
 
 	// Iterate over the CSV file
 	log.Printf("Searching data in '%v' for date: %v\n", fileName, dateRowStr)
+	idxDeceasedDate := 1
+	idxCity := 5
 	for {
 		record, err := csvReader.Read() // get a record string[]
 		if err == io.EOF { break }
@@ -205,10 +209,10 @@ func getReportDeceased(fileName, dateRowStr string) model.DeceasedReport {
 		totalDeceased++
 
 		// Looking for deceases in specific date
-		if dateRowStr == record[2] {  // Compare specific 'DATE' with 'FECHA_FALLECIMIENTO'
+		if dateRowStr == record[idxDeceasedDate] {  // Compare specific 'DATE' with 'FECHA_FALLECIMIENTO'
 			numDeceasedDate++
 			// Get decease by department
-			dept := record[6]
+			dept := record[idxCity]
 			val, isPresent := deceaseByDept[dept]
 			if isPresent {
 				deceaseByDept[dept]++
