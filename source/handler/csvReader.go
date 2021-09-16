@@ -26,8 +26,8 @@ func getDateFormat(dateVal string) string {
 
 // Return false if csv column headers are not the expected otherwise true
 func getLastDay(fileName, tagFile string) (string, bool) {
-	log.Println("Searching most recent date in csv file...")
-	// Try Open file
+	log.Println("Searching most recent date in csv file")
+	// Open file
 	csvFile, err := os.Open(fileName)
 	if err != nil {
 		log.Println("Can not open csv file: ", err)
@@ -39,29 +39,22 @@ func getLastDay(fileName, tagFile string) (string, bool) {
 	csvReader := csv.NewReader(csvFile)
 	csvReader.Comma = ';'
 
-	// Check if column header of Date is the expected one
-	idxDateField := 0
-	columnHead, _ := csvReader.Read() // get a columnHead string[]
+	var idxDateField int
 	if tagFile == "positivos" {
 		idxDateField = 7
-		if columnHead[idxDateField] != "FECHA_RESULTADO" {
-			log.Printf("Format file '%v' unexpected. Something has changed", fileName)
-			log.Printf("Expected 'FECHA_RESULTADO' at index 8, found '%v'", columnHead[8])
-			return "", false
-		}
 	} else if tagFile == "fallecidos" {
 		idxDateField = 1
-		if columnHead[idxDateField] != "FECHA_FALLECIMIENTO" {
-			log.Printf("format file '%v' unexpected. Something has changed", fileName)
-			log.Printf("Expected 'FECHA_FALLECIMIENTO' at index 2, found '%v'", columnHead[2])
-			return "", false
-		}
 	} else {
 		log.Printf("TagFile not recognized: %v", tagFile)
 		return "", false
 	}
 
 	// Get most recent Date
+	_, _ = csvReader.Read() // read first line
+	if err != nil {
+		log.Println(err)
+		return "", false
+	}
 	record, err := csvReader.Read() // from second line
 	if err != nil {
 		log.Println(err)
@@ -110,19 +103,60 @@ func getLastDay(fileName, tagFile string) (string, bool) {
 	return mostRecentDateStr, true
 }
 
-func getReportCases(fileName, dateRowStr string) model.CasesReport {
-	fmt.Println("**** getReportCases ****")
-	isOK := true
-	if dateRowStr == "" {
-		dateRowStr, isOK = getLastDay(fileName, "positivos")
+func isValidCsvFile(filename, tagFile string) bool {
+	log.Println("Validating fields from CSV File")
+
+	csvFile, err := os.Open(filename)
+	if err != nil {
+		log.Println("Error opening csv file: ", err)
+		return false
+	}
+	defer csvFile.Close()
+
+	// Setup csvReader
+	csvReader := csv.NewReader(csvFile)
+	csvReader.Comma = ';'
+	// Validate if column header of 'Date' is the expected one
+	var idxDateField int
+	lineHeaders, _ := csvReader.Read() // get a columnHead string[]
+
+	if tagFile == "positivos" {
+		idxDateField = 7
+		if lineHeaders[idxDateField] != "FECHA_RESULTADO" {
+			log.Printf("Unexpected format in csv file '%v'", filename)
+			log.Printf("Expected 'FECHA_RESULTADO' at index 8, but found '%v'", lineHeaders[8])
+			return false
+		}
+	} else if tagFile == "fallecidos" {
+		idxDateField = 1
+		if lineHeaders[idxDateField] != "FECHA_FALLECIMIENTO" {
+			log.Printf("Unexpected format in csv file '%v'", filename)
+			log.Printf("Expected 'FECHA_FALLECIMIENTO' at index 2, but found '%v'", lineHeaders[2])
+			return false
+		}
+	} else {
+		log.Printf("Tag file not recognized: %v", tagFile)
+		return false
 	}
 
-	if isOK != true {
-		log.Println("CSV File with unexpected column headers")
-		return model.CasesReport{}
+	return true
+}
+
+func getReportCases(filename, dateRowStr string) model.CasesReport {
+	fmt.Println("**** getReportCases ****")
+
+	if dateRowStr == "" {
+		isOK := isValidCsvFile(filename, "positivos")
+		if isOK {
+			dateRowStr, isOK = getLastDay(filename, "positivos")
+		} else {
+			log.Printf("Unexpected format in CSV File '%v'(review column name)\n", filename)
+			return model.CasesReport{}
+		}
 	}
+
 	// Try Open file
-	csvFile, err := os.Open(fileName)
+	csvFile, err := os.Open(filename)
 	checkForError(err)
 	defer csvFile.Close()
 	// Setup a csv reader
@@ -138,7 +172,7 @@ func getReportCases(fileName, dateRowStr string) model.CasesReport {
 	casesByDept := make(map[string]int)
 
 	// iterate over the CSV file
-	log.Printf("Searching data in '%v' for date: %v\n", fileName, dateRowStr)
+	log.Printf("Searching data in '%v' for date: %v\n", filename, dateRowStr)
 	idxDateResult := 7
 	idxCity := 1
 	for {
@@ -168,20 +202,21 @@ func getReportCases(fileName, dateRowStr string) model.CasesReport {
 	return myNewReport
 }
 
-func getReportDeceased(fileName, dateRowStr string) model.DeceasedReport {
+func getReportDeceased(filename, dateRowStr string) model.DeceasedReport {
 	fmt.Println("**** getReportDeceased ***")
-	isOK := true
+
 	if dateRowStr == "" {
-		dateRowStr, isOK = getLastDay(fileName, "fallecidos")
+		isOK := isValidCsvFile(filename, "fallecidos")
+		if isOK {
+			dateRowStr, isOK = getLastDay(filename, "fallecidos")
+		} else {
+			log.Printf("Unexpected format in CSV File '%v' (review column name)\n", filename)
+			return model.DeceasedReport{}
+		}
 	}
 
-	if isOK != true {
-		log.Println("CSV File with unexpected column headers")
-		return model.DeceasedReport{}
-	}
-
-	// Try Open file
-	csvFile, err := os.Open(fileName)
+	// Open file
+	csvFile, err := os.Open(filename)
 	checkForError(err)
 	defer csvFile.Close()
 	// Setup a csv reader
@@ -197,7 +232,7 @@ func getReportDeceased(fileName, dateRowStr string) model.DeceasedReport {
 	deceaseByDept := make(map[string]int)
 
 	// Iterate over the CSV file
-	log.Printf("Searching data in '%v' for date: %v\n", fileName, dateRowStr)
+	log.Printf("Searching data in '%v' for date: %v\n", filename, dateRowStr)
 	idxDeceasedDate := 1
 	idxCity := 5
 	for {
