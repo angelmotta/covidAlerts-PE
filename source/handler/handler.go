@@ -29,7 +29,11 @@ func NewCasesHandler(db *driver.DB) *newCasesRepo {
 func (newCases *newCasesRepo) Create(filePathPositive string) (dateCases string, dailyCases int, err error) {
 	fmt.Println("**** Create daily New cases record ****")
 	// Read CSV and return a report struct
-	reportNewCases  := getReportCases(filePathPositive, "")
+	reportNewCases, err  := getReportCases(filePathPositive, "")
+	if err != nil {
+		return dateCases, dailyCases, err	// return null values and error value
+	}
+
 	// Insert into DB (using Interface)
 	if reportNewCases.NewCases != 0 {
 		_, err = newCases.repo.Create(&reportNewCases)
@@ -64,7 +68,11 @@ func NewDeceasedCasesHandler(db *driver.DB) *deceasedCasesRepo {
 func (deceasedCases *deceasedCasesRepo) Create(filePathDeceased string) (dateDeceased string, numDeceased int, err error) {
 	fmt.Println("**** Create daily Deceased cases record ****")
 	// Read CSV and return a report
-	reportNewDeceased  := getReportDeceased(filePathDeceased, "")
+	reportNewDeceased, err  := getReportDeceased(filePathDeceased, "")
+	if err != nil {
+		return dateDeceased, numDeceased, err
+	}
+
 	// Insert into DB (using Interface)
 	if reportNewDeceased.NewDeceased != 0 {
 		_, err = deceasedCases.repo.Create(&reportNewDeceased)

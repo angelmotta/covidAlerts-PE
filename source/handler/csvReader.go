@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"github.com/angelmotta/covidAlerts-PE/source/model"
 	"io"
@@ -11,27 +12,21 @@ import (
 	"time"
 )
 
-func checkForError(e error) {
-	if e != nil {
-		log.Fatalln("Error reading csv file: ", e)
-	}
-}
-
 // Return date format 'YYYY-MM-DD'
-func getDateFormat(dateVal string) string {
+func convertDateFormat(dateVal string) string {
 	dateFormat, _ := time.Parse("20060102", dateVal)
 	newDateStr := dateFormat.Format("2006-01-02")
 	return newDateStr
 }
 
 // Return false if csv column headers are not the expected otherwise true
-func getLastDay(fileName, tagFile string) (string, bool) {
+func getLastDay(fileName, tagFile string) (string, error) {
 	log.Println("Searching most recent date in csv file")
 	// Open file
 	csvFile, err := os.Open(fileName)
 	if err != nil {
 		log.Println("Can not open csv file: ", err)
-		return "", false
+		return "", err
 	}
 	defer csvFile.Close()
 
@@ -45,66 +40,54 @@ func getLastDay(fileName, tagFile string) (string, bool) {
 	} else if tagFile == "fallecidos" {
 		idxDateField = 1
 	} else {
-		log.Printf("TagFile not recognized: %v", tagFile)
-		return "", false
+		log.Printf("tag file not recognized: %v", tagFile)
+		return "", errors.New("tag file not recognized")
 	}
 
 	// Get most recent Date
-	_, _ = csvReader.Read() // read first line
+	_, err = csvReader.Read() // read first line
 	if err != nil {
 		log.Println(err)
-		return "", false
+		return "", err
 	}
-	record, err := csvReader.Read() // from second line
-	if err != nil {
-		log.Println(err)
-		return "", false
-	}
-	fechaCorte := record[0]
-	mostRecentDateStr := record[idxDateField] // Get date from column at idxDateField 2 or 8
-	mostRecentDate, err := strconv.Atoi(mostRecentDateStr)
-	if err != nil {
-		log.Println("Error casting date string to int", err)
-		return "", false
-	}
-	// If 'FECHA_CORTE' has a record in csv return it as a most recent date
-	if fechaCorte == mostRecentDateStr {
-		log.Println("'FECHA_CORTE' is valid as most recent date")
-		return fechaCorte, true
-	}
-	// Read the rest of file and get the most recent Date
+
+	mostRecentDate := 0
 	for {
+		// Read record
 		record, err := csvReader.Read() // get a record string[]
 		if err == io.EOF { break }	// EOF
 		if err != nil {
-			log.Println("Error reading csv File:", err)
+			log.Println("error reading csv File:", err)
 		}
-		currDateStr := record[idxDateField]
-		if currDateStr == "" { continue }
-		// If 'FECHA_CORTE' has at least one record return it as a valid most recent date
-		if fechaCorte == currDateStr {
-			log.Println("'FECHA_CORTE' in csv file is valid. Most recent date", fechaCorte)
-			return fechaCorte, true
+
+		dateField := record[idxDateField]
+		fechaCorte := record[0]
+
+		if dateField == "" { continue }
+		if fechaCorte == dateField {
+			log.Println("'FECHA_CORTE' field in csv file is valid as most recent date", fechaCorte)
+			return fechaCorte, nil
 		}
-		currDate, err := strconv.Atoi(currDateStr)
+		dateFieldRecord, err := strconv.Atoi(dateField)
 		if err != nil {
-			log.Println(record)
-			log.Println(currDateStr)
-			log.Println("Error casting date string to int", err)
-			return "", false
+			log.Printf("error casting date field in line with tokens: %v\n", dateField)
+			log.Println("error casting date string to int", err)
+			return "", err
 		}
-		if currDate > mostRecentDate {
-			mostRecentDate = currDate
+
+		if dateFieldRecord > mostRecentDate {
+			mostRecentDate = dateFieldRecord
 		}
 	}
-	mostRecentDateStr = strconv.Itoa(mostRecentDate)
-	log.Println("'FECHA_CORTE' has not records in csv file")
-	log.Println("Most recent date found in csv file is:", mostRecentDateStr)
-	return mostRecentDateStr, true
+
+	mostRecentDateStr := strconv.Itoa(mostRecentDate)
+	log.Println("'FECHA_CORTE' field has not records associated in csv file")
+	log.Println("Record with most recent date in csv file is:", mostRecentDateStr)
+	return mostRecentDateStr, nil
 }
 
 func isValidCsvFile(filename, tagFile string) bool {
-	log.Println("Validating fields from CSV File")
+	log.Println("Validating fields header in CSV File")
 
 	csvFile, err := os.Open(filename)
 	if err != nil {
@@ -142,29 +125,37 @@ func isValidCsvFile(filename, tagFile string) bool {
 	return true
 }
 
-func getReportCases(filename, dateRowStr string) model.CasesReport {
+func getReportCases(filename, dateRowStr string) (model.CasesReport, error) {
 	fmt.Println("**** getReportCases ****")
-
+	var err error
 	if dateRowStr == "" {
 		isOK := isValidCsvFile(filename, "positivos")
 		if isOK {
-			dateRowStr, isOK = getLastDay(filename, "positivos")
+			dateRowStr, err = getLastDay(filename, "positivos")
+			if err != nil {
+				return model.CasesReport{}, err
+			}
 		} else {
-			log.Printf("Unexpected format in CSV File '%v'(review column name)\n", filename)
-			return model.CasesReport{}
+			log.Printf("unexpected format in CSV File '%v'(review column name)\n", filename)
+			return model.CasesReport{}, errors.New("unexpected format in CSV File")
 		}
 	}
 
-	// Try Open file
+	// Open file
 	csvFile, err := os.Open(filename)
-	checkForError(err)
+	if err != nil {
+		return model.CasesReport{}, err
+	}
 	defer csvFile.Close()
+
 	// Setup a csv reader
 	csvReader := csv.NewReader(csvFile)
 	csvReader.Comma = ';'
 	// discard first line
 	_, err = csvReader.Read()
-	checkForError(err)
+	if err != nil {
+		return model.CasesReport{}, err
+	}
 
 	// vars to return in Struct attributes
 	numNewCasesDate := 0
@@ -178,7 +169,9 @@ func getReportCases(filename, dateRowStr string) model.CasesReport {
 	for {
 		record, err := csvReader.Read() // get a record string[]
 		if err == io.EOF { break }
-		checkForError(err)
+		if err != nil {
+			return model.CasesReport{}, err
+		}
 		// Count total covid cases from the beginning of the pandemic
 		totalCases++
 		// Looking for new cases in last day
@@ -197,34 +190,42 @@ func getReportCases(filename, dateRowStr string) model.CasesReport {
 		}
 	}
 
-	dateStr := getDateFormat(dateRowStr) // convert to date format 'YYYY-MM-DD'
+	dateStr := convertDateFormat(dateRowStr) // convert to date format 'YYYY-MM-DD'
 	myNewReport := model.CasesReport{Date: dateStr, NewCases: numNewCasesDate, TotalCases: totalCases, NewCasesByDept: casesByDept}
-	return myNewReport
+	return myNewReport, nil
 }
 
-func getReportDeceased(filename, dateRowStr string) model.DeceasedReport {
+func getReportDeceased(filename, dateRowStr string) (model.DeceasedReport, error) {
 	fmt.Println("**** getReportDeceased ***")
-
+	var err error
 	if dateRowStr == "" {
 		isOK := isValidCsvFile(filename, "fallecidos")
 		if isOK {
-			dateRowStr, isOK = getLastDay(filename, "fallecidos")
+			dateRowStr, err = getLastDay(filename, "fallecidos")
+			if err != nil {
+				return model.DeceasedReport{}, err
+			}
 		} else {
-			log.Printf("Unexpected format in CSV File '%v' (review column name)\n", filename)
-			return model.DeceasedReport{}
+			log.Printf("unexpected format in CSV File '%v' (review column name)\n", filename)
+			return model.DeceasedReport{}, errors.New("unexpected format in CSV File")
 		}
 	}
 
 	// Open file
 	csvFile, err := os.Open(filename)
-	checkForError(err)
+	if err != nil {
+		return model.DeceasedReport{}, err
+	}
 	defer csvFile.Close()
+
 	// Setup a csv reader
 	csvReader := csv.NewReader(csvFile)
 	csvReader.Comma = ';'
 	// discard first line of column headers
 	_, err = csvReader.Read()
-	checkForError(err)
+	if err != nil {
+		return model.DeceasedReport{}, err
+	}
 
 	// vars to return in Struct attributes
 	totalDeceased := 0
@@ -238,7 +239,9 @@ func getReportDeceased(filename, dateRowStr string) model.DeceasedReport {
 	for {
 		record, err := csvReader.Read() // get a record string[]
 		if err == io.EOF { break }
-		checkForError(err)
+		if err != nil {
+			return model.DeceasedReport{}, err
+		}
 
 		// Count total deceases from the beginning of pandemic
 		totalDeceased++
@@ -258,7 +261,7 @@ func getReportDeceased(filename, dateRowStr string) model.DeceasedReport {
 		}
 	}
 
-	dateStr := getDateFormat(dateRowStr) // convert to date format 'YYYY-MM-DD'
+	dateStr := convertDateFormat(dateRowStr) // convert to date format 'YYYY-MM-DD'
 	myReportDeceases := model.DeceasedReport{Date: dateStr, NewDeceased: numDeceasedDate, TotalDeceased: totalDeceased, DeceasesByDept: deceaseByDept}
-	return myReportDeceases
+	return myReportDeceases, nil
 }
